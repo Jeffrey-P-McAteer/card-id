@@ -15,25 +15,29 @@ def j(*parts):
 def e(*parts):
   return os.path.exists(j(*parts))
 
-def build_libpcsc(compiler, libpcsc_cpp_dir):
+def build_libpcsc(compiler, lib_pcsc_dir):
   cmd('sh',
     '-c',
     '''
-cd {libpcsc_cpp_dir}
-cmake -DCMAKE_BUILD_TYPE=release -B build -S .
-cmake --build build --config release
+cd {lib_pcsc_dir}
+./bootstrap && ./configure --enable-debugatr --enable-scf --enable-static && make
 '''.format(
-  libpcsc_cpp_dir=libpcsc_cpp_dir
+  lib_pcsc_dir=lib_pcsc_dir
 ).strip()
   )
 
 
 def main(args=sys.argv):
+  if 'clean' in args:
+    if e('build'):
+      shutil.rmtree('build')
+
   if not e('build'):
     os.makedirs('build')
 
-  if not e('build', 'libpcsc-cpp'):
-    cmd('git', 'clone', '--recurse-submodules', 'https://github.com/web-eid/libpcsc-cpp.git', j('build', 'libpcsc-cpp'))
+  # Download dependencies
+  if not e('build', 'PCSC'):
+    cmd('git', 'clone', '--recurse-submodules', '--depth', '1', 'https://salsa.debian.org/rousseau/PCSC.git', j('build', 'PCSC'))
 
   supported_compilers = [
     'g++', 'clang++'
@@ -49,16 +53,16 @@ def main(args=sys.argv):
     raise Exception('Cannot find any supported compilers on this system! supported copilers = {}'.format(supported_compilers))
 
   # First build dependencies (we don't allow CMAKE in this house)
-  if not e('build', 'libpcsc-cpp', 'build', 'libpcsc-cpp.a'):
-    build_libpcsc(compiler, j('build', 'libpcsc-cpp'))
+  if not e('build', 'PCSC', 'build', 'libpcsc-cpp.a'):
+    build_libpcsc(compiler, j('build', 'PCSC'))
 
   # Then build card-id
   cmd(compiler,
     '-o', j('build', 'card-id'),
     '-Wall', '-Werror',
-    '-I', j('build', 'libpcsc-cpp', 'include'),
-    '-L', j('build', 'libpcsc-cpp', 'build'),
-    '-lpcsc-cpp',
+    '-I', j('build', 'PCSC', 'src'),
+    '-L', j('build', 'PCSC', 'src', '.libs'),
+    '-lpcsclite',
     j('src', 'main.cpp'),
     '-lpcsc-cpp',
   )

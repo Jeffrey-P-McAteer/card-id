@@ -1,7 +1,7 @@
 
 #include <iostream>
 
-#include "pcsc-cpp/pcsc-cpp.hpp"
+#include ""
 
 int main(int argc, char** argv) {
   std::cout << "Hello!" << std::endl;
