@@ -15,6 +15,21 @@ std::string one_byte_to_string(const unsigned char byte) {
     return stm.str();
 }
 
+std::string bytes_to_str(std::vector<unsigned char> some_bytes) {
+  std::string str = "";
+  for (auto b : some_bytes) {
+    str += one_byte_to_string(b);
+  }
+  return str;
+}
+
+std::vector<unsigned char> do_tx(pcsc_cpp::SmartCard::ptr card_ptr, std::vector<unsigned char> apdu_cmd_bytes) {
+  auto directory_c = pcsc_cpp::CommandApdu::fromBytes(apdu_cmd_bytes);
+  auto tx_guard2 = card_ptr->beginTransaction();
+  auto response = card_ptr->transmit(directory_c);
+  return response.toBytes();
+}
+
 
 int main(int argc, char** argv) {
   std::cout << "Hello!" << std::endl;
