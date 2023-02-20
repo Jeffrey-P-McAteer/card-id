@@ -23,8 +23,8 @@ std::string bytes_to_str(std::vector<unsigned char> some_bytes) {
   return str;
 }
 
-std::vector<unsigned char> do_tx(pcsc_cpp::SmartCard::ptr& card_ptr, std::vector<unsigned char> apdu_cmd_bytes) {
-  auto directory_c = pcsc_cpp::CommandApdu::fromBytes(apdu_cmd_bytes);
+std::vector<unsigned char> do_tx(pcsc_cpp::SmartCard::ptr& card_ptr, std::vector<unsigned char> apdu_cmd_bytes, bool useLe = false) {
+  auto directory_c = pcsc_cpp::CommandApdu::fromBytes(apdu_cmd_bytes, useLe);
   auto tx_guard2 = card_ptr->beginTransaction();
   auto response = card_ptr->transmit(directory_c);
   return response.toBytes();
@@ -59,37 +59,31 @@ int main(int argc, char** argv) {
           0x00, // Instruction parameter 2
           0x07, // number of data bytes (next N bytes)
           0xA0, 0x00, 0x00, 0x00, 0x03, 0x10, 0x10, // VISA AID
-          // 0x00, // Max number of response bytes we can accept; 0 == 256
+          // 0x00, // Max number of response bytes we can accept; 0 == 256; pcsc_cpp automatically calculates this for us
         };
         auto fcp_resp = do_tx(card_ptr, fcp_req);
         std::cout << "fcp_req=" << bytes_to_str(fcp_req) << " fcp_resp=" << bytes_to_str(fcp_resp) << std::endl;
         std::cout << std::endl;
 
-        // // We want to try to read everything; when we get back 0x90 (OK) or 0x61 (more data available) as first byte of response we found something!
-        // for (unsigned char p1=0x00; p1 < 0xff; p1 += 1) {
-        //   for (unsigned char p2=0x00; p2 < 0x0f; p2 += 1) {
-        //     std::vector<unsigned char> req {
-        //       0x00, // Class byte, always 0
-        //       0xB2, // Instruction: 0xA4 means Select (something), 0xB2 means read a record
-        //       p1, // Instruction parameter 1
-        //       p2, // Instruction parameter 2
-        //       0x00, // number of data bytes (next N bytes)
-        //       // No data bytes
-        //       0x00, // Max number of response bytes we can accept; 0 == 256
-        //     };
-        //     try {
-        //       auto resp = do_tx(card_ptr, req);
-        //       if (resp[0] == 0x90 || resp[0] == 0x61) {
-        //         std::cout << "p1=" << one_byte_to_string(p1) << " p2=" << one_byte_to_string(p2) << std::endl;
-        //         std::cout << "req=" << bytes_to_str(req) << " resp=" << bytes_to_str(resp) << std::endl;
-        //         std::cout << std::endl;
-        //       }
-        //     }
-        //     catch (...) {
-        //       // Guess who doesn't care?
-        //     }
-        //   }
-        // }
+        // Now we _ought_ to be able to read records:
+        for (unsigned char sfi = 0x01; sfi <= 0x1f; sfi += 0x01) {
+          for (unsigned char rec = 0x01; rec <= 0x10; rec += 0x01) {
+            std::cout << "sfi=" << one_byte_to_string(sfi) << " rec=" << one_byte_to_string(rec) << std::endl;
+
+            std::vector<unsigned char> read_req {
+              0x00, // Class byte, always 0
+              0xB2, // Instruction: 0xA4 means Select (something), 0xB2 means read a record
+              rec, // Instruction parameter 1 (record number)
+              (unsigned char) ((sfi << 3) | 4), // Instruction parameter 2 (not even gonna pretend to understand why we're shifting this around)
+              0x00, // number of data bytes (next N bytes)
+            };
+            auto read_resp = do_tx(card_ptr, read_req, true);
+            std::cout << "read_req=" << bytes_to_str(read_req) << " read_resp=" << bytes_to_str(read_resp) << std::endl;
+            std::cout << std::endl;
+
+          }
+        }
+
 
 
 
