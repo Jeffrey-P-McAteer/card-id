@@ -16,3 +16,10 @@ python -m build
 ```
 
 
+# Reading
+
+ - https://www.openscdp.org/scripts/tutorial/emv/index.html
+    - High-level background of smartcard transactions
+
+
+
