@@ -23,4 +23,15 @@ python -m build
  - https://gist.github.com/hemantvallabh/d24d71a933e7319727cd3daa50ad9f2c
 
 
+# Misc
 
+```bash
+pcsc_scan
+
+pkcs11-tool --list-slots
+pkcs11-tool --list-objects
+pkcs11-tool --login --list-objects
+
+
+
+```
