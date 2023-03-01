@@ -2,6 +2,7 @@
 #include <iostream>
 #include <cstdint>
 #include <algorithm>
+#include <string>
 // #include <format> // WHY DOESN'T ANYONE HAVE C++20 <format> IMPLEMENTED 3 YEARS LATER???? Ugh
 
 
@@ -23,6 +24,17 @@ std::string bytes_to_str(std::vector<unsigned char> some_bytes) {
   return str;
 }
 
+std::string resp_bytestr_to_msg(std::string err_msg_bytes) {
+  std::transform(err_msg_bytes.begin(), err_msg_bytes.end(), err_msg_bytes.begin(), [](char const &c) {
+      return std::toupper(c);
+  });
+  if (err_msg_bytes == "") {
+    // todo
+    
+  }
+  return err_msg_bytes;
+}
+
 std::vector<unsigned char> do_tx(pcsc_cpp::SmartCard::ptr& card_ptr, std::vector<unsigned char> apdu_cmd_bytes, bool useLe = false) {
   auto directory_c = pcsc_cpp::CommandApdu::fromBytes(apdu_cmd_bytes, useLe);
   auto tx_guard2 = card_ptr->beginTransaction();
@@ -38,19 +50,13 @@ int main(int argc, char** argv) {
     std::cout << " - " << reader.statusString() << std::endl;
     // Test if card exists, if so try to read from it
     if (reader.isCardInserted()) {
-      std::cout << "Connecting..."<< std::endl;
+      std::cout << "Connecting to card..."<< std::endl;
       auto card_ptr = reader.connectToCard();
       if (card_ptr == nullptr) {
         std::cout << "Error connecting to card!"<< std::endl;
       }
       else {
         std::cout << "card_ptr=" << card_ptr.get() << std::endl;
-
-        // {
-        //   std::vector<unsigned char> req {0x00, 0xa4, 0x00, 0x0c, /**/ 0x90, 0x00};
-        //   auto resp = do_tx(card_ptr, req);
-        //   std::cout << "req=" << bytes_to_str(req) << " resp=" << bytes_to_str(resp) << std::endl;
-        // }
 
         std::vector<unsigned char> fcp_req {
           0x00, // Class byte, always 0
@@ -78,7 +84,7 @@ int main(int argc, char** argv) {
               0x00, // number of data bytes (next N bytes)
             };
             auto read_resp = do_tx(card_ptr, read_req, true);
-            std::cout << "read_req=" << bytes_to_str(read_req) << " read_resp=" << bytes_to_str(read_resp) << std::endl;
+            std::cout << "read_req=" << bytes_to_str(read_req) << " read_resp=" << bytes_to_str(read_resp) << " (" << resp_bytestr_to_msg(bytes_to_str(read_resp)) << ")" << std::endl;
             std::cout << std::endl;
 
           }
