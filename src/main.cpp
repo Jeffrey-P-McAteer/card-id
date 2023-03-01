@@ -28,9 +28,11 @@ std::string resp_bytestr_to_msg(std::string err_msg_bytes) {
   std::transform(err_msg_bytes.begin(), err_msg_bytes.end(), err_msg_bytes.begin(), [](char const &c) {
       return std::toupper(c);
   });
-  if (err_msg_bytes == "") {
-    // todo
-    
+  if (err_msg_bytes == "6A83") {
+    return "Record not found";
+  }
+  else if (err_msg_bytes == "6A83") {
+    return "Record not found";
   }
   return err_msg_bytes;
 }
