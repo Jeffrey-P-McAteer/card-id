@@ -76,7 +76,7 @@ def main(args=sys.argv):
   cmd(compiler,
     '-o', j('build', 'card-id'),
     
-    '-Wall', '-Werror', '-std=c++20',
+    '-Wall', '-Werror', '-std=c++20', '-static',
     
     '-I', j('build', 'PCSC', 'src'),
     '-L', j('build', 'PCSC', 'src', '.libs'),
