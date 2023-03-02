@@ -89,6 +89,10 @@ int main(int argc, char** argv) {
             std::cout << "read_req=" << bytes_to_str(read_req) << " read_resp=" << bytes_to_str(read_resp) << " (" << resp_bytestr_to_msg(bytes_to_str(read_resp)) << ")" << std::endl;
             std::cout << std::endl;
 
+            if (read_resp[0] == 0x6A && read_resp[1] == 0x83) {
+              rec = 0x12; // end inner loop
+            }
+
           }
         }
 

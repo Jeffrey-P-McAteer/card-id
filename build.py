@@ -77,6 +77,9 @@ def main(args=sys.argv):
     '-o', j('build', 'card-id'),
     
     '-Wall', '-Werror', '-std=c++20', '-static',
+
+    # Turn off when building for small releases
+    '-g',
     
     '-I', j('build', 'PCSC', 'src'),
     '-L', j('build', 'PCSC', 'src', '.libs'),
@@ -93,7 +96,13 @@ def main(args=sys.argv):
     '-lpcsclite',
   )
 
-  cmd(j('build', 'card-id'))
+  try:
+    if shutil.which('gdbbin'):
+      cmd('gdbbin', j('build', 'card-id'))
+    else:
+      cmd(j('build', 'card-id'))
+  except:
+    pass
 
 
 if __name__ == '__main__':
