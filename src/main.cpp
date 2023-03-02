@@ -85,13 +85,16 @@ int main(int argc, char** argv) {
               (unsigned char) ((sfi << 3) | 4), // Instruction parameter 2 (not even gonna pretend to understand why we're shifting this around)
               0x00, // number of data bytes (next N bytes)
             };
+            std::cout << "read_req=" << bytes_to_str(read_req) << std::endl;
             auto read_resp = do_tx(card_ptr, read_req, true);
-            std::cout << "read_req=" << bytes_to_str(read_req) << " read_resp=" << bytes_to_str(read_resp) << " (" << resp_bytestr_to_msg(bytes_to_str(read_resp)) << ")" << std::endl;
+            std::cout << "read_resp=" << bytes_to_str(read_resp) << " (" << resp_bytestr_to_msg(bytes_to_str(read_resp)) << ")" << std::endl;
             std::cout << std::endl;
 
             if (read_resp[0] == 0x6A && read_resp[1] == 0x83) {
               rec = 0x12; // end inner loop
             }
+
+            std::cout << std::endl;
 
           }
         }
