@@ -53,6 +53,13 @@ def main(args=sys.argv):
   if not e('build', 'libpcsc-cpp'):
     cmd('git', 'clone', '--recurse-submodules', '--depth', '1', 'https://github.com/web-eid/libpcsc-cpp.git', j('build', 'libpcsc-cpp'))
 
+  if not e('build', 'scsh3.17.584-noinstall.zip'):
+    cmd('wget', '-O', j('build', 'scsh3.17.584-noinstall.zip'), 'https://www.openscdp.org/download/scsh3/scsh3.17.584-noinstall.zip')
+
+  if not e('build', 'scsh3.17.584-noinstall'):
+    cmd('unzip', j('build', 'scsh3.17.584-noinstall.zip'), '-d', j('build', 'scsh3.17.584-noinstall'))
+
+
   supported_compilers = [
     'g++', 'clang++'
   ]
