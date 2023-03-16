@@ -32,6 +32,7 @@ pkcs11-tool --list-slots
 pkcs11-tool --list-objects
 pkcs11-tool --login --list-objects
 
+( cd ./build/scsh3.17.584-noinstall/scsh3.17.584/ && chmod +x scsh3 && ./scsh3 )
 
 
 ```
