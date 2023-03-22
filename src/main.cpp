@@ -24,7 +24,21 @@ std::string bytes_to_str(std::vector<unsigned char> some_bytes) {
   return str;
 }
 
-std::string resp_bytestr_to_msg(std::string err_msg_bytes) {
+std::string one_byte_to_string_chars(const unsigned char byte) {
+    std::ostringstream stm ;
+    stm << byte ;
+    return stm.str();
+}
+
+std::string bytes_to_str_chars(std::vector<unsigned char> some_bytes) {
+  std::string str = "";
+  for (auto b : some_bytes) {
+    str += one_byte_to_string_chars(b);
+  }
+  return str;
+}
+
+std::string resp_bytestr_to_msg(std::string err_msg_bytes, std::vector<unsigned char> some_bytes) {
   std::transform(err_msg_bytes.begin(), err_msg_bytes.end(), err_msg_bytes.begin(), [](char const &c) {
       return std::toupper(c);
   });
@@ -34,7 +48,10 @@ std::string resp_bytestr_to_msg(std::string err_msg_bytes) {
   else if (err_msg_bytes == "6A83") {
     return "Record not found";
   }
-  return err_msg_bytes;
+  // if (some_bytes == nullptr) {
+  //   return err_msg_bytes;
+  // }
+  return bytes_to_str_chars(some_bytes); // Could be useful data, by default decode to ASCII
 }
 
 std::vector<unsigned char> do_tx(pcsc_cpp::SmartCard::ptr& card_ptr, std::vector<unsigned char> apdu_cmd_bytes, bool useLe = false) {
@@ -48,7 +65,8 @@ std::vector<unsigned char> do_tx_noisy(pcsc_cpp::SmartCard::ptr& card_ptr, std::
   std::cout << std::endl;
   std::cout << "TX=" << bytes_to_str(apdu_cmd_bytes) << " useLe=" << useLe << std::endl;
   auto response = do_tx(card_ptr, apdu_cmd_bytes, useLe);
-  std::cout << "RX=" << bytes_to_str(response) << std::endl;
+  std::cout << "RX=" << bytes_to_str(response) << " (" << resp_bytestr_to_msg( bytes_to_str(response), response  ) << ")" << std::endl;
+  //std::cout << "ASCII RX=" << bytes_to_str_chars(response) << std::endl;
   return response;
 }
 
@@ -83,18 +101,27 @@ int main(int argc, char** argv) {
 
         do_tx_noisy(card_ptr, fcp_req);
 
+
         std::vector<unsigned char> req02 {
           0x00, // Class byte, always 0
-          0xA4, // Instruction: 0xA4 means Select (something), 0xB2 means read a record
-          0x04, // Instruction parameter 1
-          0x00, // Instruction parameter 2
-          0x07, // number of data bytes (next N bytes)
-          0xA0, 0x00, 0x00, 0x00, 0x03, 0x10, 0x10, // VISA AID (application identifier)
+          0xB2, // Instruction: 0xA4 means Select (something), 0xB2 means read a record
+          0x01, // Instruction parameter 1
+          0x0C, // Instruction parameter 2
+          0x00, // number of data bytes (next N bytes)
+          // 0xA0, 0x00, 0x00, 0x00, 0x03, 0x10, 0x10, // VISA AID (application identifier)
           // 0x00, // Max number of response bytes we can accept; 0 == 256; pcsc_cpp automatically calculates this for us
         };
 
-
-        do_tx_noisy(card_ptr, req02);
+        for (int m=12; m<=28; m += 1) {
+          std::cout << "m=" << m << std::endl;
+          try {
+            req02[3] = m; // overwrite record 0x0C w/ M, always try to read first item in record (req02[2])
+            do_tx_noisy(card_ptr, req02, /*useLe:*/true);
+          }
+          catch (...) {
+            std::cout << "Exception!" << std::endl;
+          }
+        }
 
         // // Now we _ought_ to be able to read records:
         // for (unsigned char sfi = 0x01; sfi <= 0x1f; sfi += 0x01) {
