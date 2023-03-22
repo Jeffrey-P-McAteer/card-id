@@ -43,6 +43,31 @@ def main(args=sys.argv):
     if e('build'):
       shutil.rmtree('build')
 
+  required_binaries_to_build = [
+    'git',
+    'wget', 'unzip', 
+    'cmake', 'sh', 'make',
+    ['g++', 'clang++'], # either g++ or clang++ is acceptable
+  ]
+  for b in required_binaries_to_build:
+    if isinstance(b, str):
+      if shutil.which(b) is None:
+        print(f'ERROR: This build script requires the tool "{b}" to be installed, but we cannot find it!')
+        print(f'       If you have recently installed "{b}", check your PATH environment variable and re-start')
+        print('       the parent processes of this terminal or IDE.')
+        return
+    else:
+      # b must be an iterable
+      at_least_one_exists = False
+      for _b in b:
+        if not (shutil.which(_b) is None):
+          at_least_one_exists = True
+      if not at_least_one_exists:
+        print(f'ERROR: This build script requires at least one of the tools "{",".join(b)}" to be installed, but we cannot find any of them!')
+        print(f'       If you have recently installed one of "{",".join(b)}", check your PATH environment variable and re-start')
+        print('       the parent processes of this terminal or IDE.')
+        return
+
   if not e('build'):
     os.makedirs('build')
 
