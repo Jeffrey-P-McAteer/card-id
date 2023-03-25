@@ -36,3 +36,8 @@ pkcs11-tool --login --list-objects
 
 
 ```
+
+# Research
+
+ - https://iso8583.info/lib/VISA/VIS/APDU
+ - https://stackoverflow.com/questions/40663460/use-apdu-commands-to-get-some-information-for-a-card 

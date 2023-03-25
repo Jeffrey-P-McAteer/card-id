@@ -45,8 +45,8 @@ std::string resp_bytestr_to_msg(std::string err_msg_bytes, std::vector<unsigned 
   if (err_msg_bytes == "6A83") {
     return "Record not found";
   }
-  else if (err_msg_bytes == "6A83") {
-    return "Record not found";
+  else if (err_msg_bytes == "6A81") {
+    return "Function not supported";
   }
   // if (some_bytes == nullptr) {
   //   return err_msg_bytes;
@@ -114,9 +114,15 @@ int main(int argc, char** argv) {
 
         for (int m=12; m<=28; m += 1) {
           std::cout << "m=" << m << std::endl;
+          req02[3] = m; // overwrite record 0x0C w/ M, always try to read first item in record (req02[2])
           try {
-            req02[3] = m; // overwrite record 0x0C w/ M, always try to read first item in record (req02[2])
             do_tx_noisy(card_ptr, req02, /*useLe:*/true);
+          }
+          catch (...) {
+            std::cout << "Exception!" << std::endl;
+          }
+          try {
+            do_tx_noisy(card_ptr, req02, /*useLe:*/false);
           }
           catch (...) {
             std::cout << "Exception!" << std::endl;
