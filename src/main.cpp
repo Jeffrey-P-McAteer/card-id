@@ -42,15 +42,16 @@ std::string resp_bytestr_to_msg(std::string err_msg_bytes, std::vector<unsigned 
   std::transform(err_msg_bytes.begin(), err_msg_bytes.end(), err_msg_bytes.begin(), [](char const &c) {
       return std::toupper(c);
   });
+  // See https://www.eftlab.com/knowledge-base/complete-list-of-apdu-responses
   if (err_msg_bytes == "6A83") {
     return "Record not found";
+  }
+  else if (err_msg_bytes == "6A82") {
+    return "File not found";
   }
   else if (err_msg_bytes == "6A81") {
     return "Function not supported";
   }
-  // if (some_bytes == nullptr) {
-  //   return err_msg_bytes;
-  // }
   return bytes_to_str_chars(some_bytes); // Could be useful data, by default decode to ASCII
 }
 
@@ -101,65 +102,28 @@ int main(int argc, char** argv) {
 
         do_tx_noisy(card_ptr, fcp_req);
 
-
         std::vector<unsigned char> req02 {
           0x00, // Class byte, always 0
-          0xB2, // Instruction: 0xA4 means Select (something), 0xB2 means read a record
-          0x01, // Instruction parameter 1
-          0x0C, // Instruction parameter 2
+          0xA4, // Instruction: 0xA4 means Select (something), 0xB2 means read a record
+          0x5F, // Instruction parameter 1
+          0x20, // Instruction parameter 2
           0x00, // number of data bytes (next N bytes)
-          // 0xA0, 0x00, 0x00, 0x00, 0x03, 0x10, 0x10, // VISA AID (application identifier)
-          // 0x00, // Max number of response bytes we can accept; 0 == 256; pcsc_cpp automatically calculates this for us
         };
 
-        for (int m=12; m<=28; m += 1) {
-          std::cout << "m=" << m << std::endl;
-          req02[3] = m; // overwrite record 0x0C w/ M, always try to read first item in record (req02[2])
-          try {
-            do_tx_noisy(card_ptr, req02, /*useLe:*/true);
-          }
-          catch (...) {
-            std::cout << "Exception!" << std::endl;
-          }
-          try {
-            do_tx_noisy(card_ptr, req02, /*useLe:*/false);
-          }
-          catch (...) {
-            std::cout << "Exception!" << std::endl;
-          }
-        }
+        do_tx_noisy(card_ptr, req02, /*useLe:*/true);
 
-        // // Now we _ought_ to be able to read records:
-        // for (unsigned char sfi = 0x01; sfi <= 0x1f; sfi += 0x01) {
-        //   for (unsigned char rec = 0x01; rec <= 0x10; rec += 0x01) {
-        //     std::cout << "sfi=" << one_byte_to_string(sfi) << " rec=" << one_byte_to_string(rec) << std::endl;
 
-        //     std::vector<unsigned char> read_req {
-        //       0x00, // Class byte, always 0
-        //       0xB2, // Instruction: 0xA4 means Select (something), 0xB2 means read a record
-        //       rec, // Instruction parameter 1 (record number)
-        //       (unsigned char) ((sfi << 3) | 4), // Instruction parameter 2 (not even gonna pretend to understand why we're shifting this around)
-        //       0x00, // number of data bytes (next N bytes)
-        //     };
-        //     std::cout << "read_req=" << bytes_to_str(read_req) << std::endl;
-        //     try {
-        //       auto read_resp = do_tx(card_ptr, read_req, true);
-        //       std::cout << "read_resp=" << bytes_to_str(read_resp) << " (" << resp_bytestr_to_msg(bytes_to_str(read_resp)) << ")" << std::endl;
-        //       std::cout << std::endl;
-        //       if (read_resp[0] == 0x6A && read_resp[1] == 0x83) {
-        //         rec = 0x12; // end inner loop
-        //       }
+        // Hey this gets something back!
+        std::vector<unsigned char> req03 { // 00A404000E315041592E5359532E4444463031
+          0x00, // Class byte, always 0
+          0xA4, // Instruction: 0xA4 means Select (something), 0xB2 means read a record
+          0x04, // Instruction parameter 1
+          0x00, // Instruction parameter 2
+          0x0E, // number of data bytes (next N bytes)
+          0x31, 0x50, 0x41, 0x59, 0x2E, 0x53, 0x59, 0x53, 0x2E, 0x44, 0x44, 0x46, 0x30, 0x31
+        };
 
-        //     }
-        //     catch (...) {
-        //       std::cout << "Exception!" << std::endl;
-        //     }
-
-        //     std::cout << std::endl;
-
-        //   }
-        // }
-
+        do_tx_noisy(card_ptr, req03, /*useLe:*/true);
 
 
 
